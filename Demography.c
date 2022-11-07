@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#define DEBUG 1
+#define DEBUG 0
 #define AGE_GROUP 20
 
 const char FILE_NAME[] = "Files/total.txt";
@@ -14,7 +14,8 @@ const int STARTING_COUPLE_YEAR = 20;
 void loadPopulation(); // initialize populations from the file
 int getYear(); // get the estimated year from user
 int getChild(); // get number of estimated child taken by a couple from user
-long long int calculatePopulations(int year, int child); // calculate populations and return the updated result
+float getInfantMorality(); // get infant morality rate per 1000 live births
+long long int calculatePopulations(int year, int child, float iF); // calculate populations and return the updated result
 void updatePopulations(int child); // update the populations
 
 struct Populations {
@@ -29,8 +30,9 @@ int main()
     loadPopulation();
     int year = getYear();
     int child = getChild();
+    float iF = getInfantMorality();
 
-    long long int predictedPopu = calculatePopulations(year - CURRENT_YEAR, child);
+    long long int predictedPopu = calculatePopulations(year - CURRENT_YEAR, child, iF);
 
     printf("\n\n");
 
@@ -87,7 +89,19 @@ int getChild()
     return child;
 }
 
-long long int calculatePopulations(int year, int child)
+float getInfantMorality()
+{
+    float iF;
+
+    do {
+        printf("Enter infant morality (Per 1000 live births): ");
+        scanf("%f", &iF);
+    } while(iF < 0);
+
+    return iF;
+}
+
+long long int calculatePopulations(int year, int child, float iF)
 {
     // Here we are assuming that all the peoples between
     // 20 to 29 years is a married couple.
@@ -97,12 +111,12 @@ long long int calculatePopulations(int year, int child)
     int index = STARTING_COUPLE_YEAR / 5;
     while(y >= 5) {
         // half of the total people
-        newChild += (populations[index].popu / 2) * child;
-        updatePopulations((populations[index].popu / 2) * child);
+        int newChild1 = (populations[index].popu / 2) * child;
+        newChild1 -= (iF / 1000) * newChild1;
+        updatePopulations(newChild1);
+        newChild += newChild1;
         y -= 5;
     }
-
-    // printf("y = %d\n", y);
 
     // calculate the remaining with percentage if present
     if (y)
