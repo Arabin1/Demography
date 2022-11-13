@@ -3,9 +3,9 @@
 #define DEBUG 0
 #define AGE_GROUP 20
 
-const char FILE_NAME[] = "Files/total.txt";
-const int CURRENT_YEAR = 2020;
-const float DEATH_RATE = 5.534;
+const char FILE_NAME[] = "Files/2011_total.txt";
+const int CURRENT_YEAR = 2011;
+const float DEATH_RATE[] = {5.638, 5.553};
 long long int CURRENT_POPULATIONS = 0;
 // Here we are assuming that all the people of age
 // 20 to 24 years is a married couple.
@@ -38,6 +38,7 @@ int main()
 
     printf("Current Populations:   %d\n", CURRENT_POPULATIONS);
     printf("Predicted Populations: %lld\n", predictedPopu);
+    printf("Populations at 2020:   168220000\n");
     printf("Populations increases: %lld\n", predictedPopu - CURRENT_POPULATIONS);
 
     return 0;
@@ -104,26 +105,31 @@ float getInfantMorality()
 long long int calculatePopulations(int year, int child, float iF)
 {
     // Here we are assuming that all the peoples between
-    // 20 to 29 years is a married couple.
-    long long int newChild = 0;
-    int y = year;
+    // 20 to 24 years is a married couple.
+    long long int updatedPopu = CURRENT_POPULATIONS, deathPopu = 0;
+    int y = year, i = 0;
 
     int index = STARTING_COUPLE_YEAR / 5;
     while(y >= 5) {
         // half of the total people
-        int newChild1 = (populations[index].popu / 2) * child;
-        newChild1 -= (iF / 1000) * newChild1;
-        updatePopulations(newChild1);
-        newChild += newChild1;
+        int newChild = (populations[index].popu / 2) * child;
+        newChild -= (iF / 1000) * newChild;
+        updatePopulations(newChild);
+        updatedPopu += newChild;
+        deathPopu += ((updatedPopu * DEATH_RATE[i++]) / 1000);
+        updatedPopu -= deathPopu;
         y -= 5;
     }
 
     // calculate the remaining with percentage if present
-    if (y)
-        newChild += ((y / 5) * (populations[index].popu / 2)) * child;
-
-    long long int updatedPopu = CURRENT_POPULATIONS + newChild;
-    long long int deathPopu = ((updatedPopu * DEATH_RATE) / 1000) * year;
+    if (y){
+        int newChild = ((y / 5) * (populations[index].popu / 2)) * child;
+        newChild -= (iF / 1000) * newChild;
+        updatePopulations(newChild);
+        updatedPopu += newChild;
+        deathPopu += ((updatedPopu * DEATH_RATE[i++]) / 1000);
+        updatedPopu -= deathPopu;
+    }
 
     if (DEBUG) {
         printf("Updated without death: %lld\n", updatedPopu);
@@ -132,7 +138,7 @@ long long int calculatePopulations(int year, int child, float iF)
         printf("Year = %d\n", year);
     }
 
-    return updatedPopu - deathPopu;
+    return updatedPopu;
 }
 
 void updatePopulations(int child)
