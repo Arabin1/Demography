@@ -13,9 +13,9 @@ const int STARTING_COUPLE_YEAR = 20;
 
 void loadPopulation(); // initialize populations from the file
 int getYear(); // get the estimated year from user
-int getChild(); // get number of estimated child taken by a couple from user
+float getChild(); // get number of estimated child taken by a couple from user
 float getInfantMorality(); // get infant morality rate per 1000 live births
-long long int calculatePopulations(int year, int child, float iF); // calculate populations and return the updated result
+long long int calculatePopulations(int year, float child, float iF); // calculate populations and return the updated result
 void updatePopulations(int child); // update the populations
 
 struct Populations {
@@ -29,7 +29,7 @@ int main()
 {
     loadPopulation();
     int year = getYear();
-    int child = getChild();
+    float child = getChild();
     float iF = getInfantMorality();
 
     long long int predictedPopu = calculatePopulations(year - CURRENT_YEAR, child, iF);
@@ -78,14 +78,14 @@ int getYear()
     return year;
 }
 
-int getChild()
+float getChild()
 {
-    int child;
+    float child;
 
     do {
         printf("Enter estimated child taken by a couple: ");
-        scanf("%d", &child);
-    } while (child < 0);
+        scanf("%f", &child);
+    } while (child < 0.0);
 
     return child;
 }
@@ -102,7 +102,7 @@ float getInfantMorality()
     return iF;
 }
 
-long long int calculatePopulations(int year, int child, float iF)
+long long int calculatePopulations(int year, float child, float iF)
 {
     // Here we are assuming that all the peoples between
     // 20 to 24 years is a married couple.
@@ -112,22 +112,23 @@ long long int calculatePopulations(int year, int child, float iF)
     int index = STARTING_COUPLE_YEAR / 5;
     while(y >= 5) {
         // half of the total people
-        int newChild = (populations[index].popu / 2) * child;
-        newChild -= (iF / 1000) * newChild;
+        float newChild = (populations[index].popu / 2) * child;
+        newChild -= (iF / 1000.0) * newChild;
         updatePopulations(newChild);
         updatedPopu += newChild;
-        deathPopu += ((updatedPopu * DEATH_RATE[i++]) / 1000);
+        deathPopu = ((updatedPopu * DEATH_RATE[i++]) / 1000);
         updatedPopu -= deathPopu;
         y -= 5;
     }
 
     // calculate the remaining with percentage if present
     if (y){
-        int newChild = ((y / 5) * (populations[index].popu / 2)) * child;
-        newChild -= (iF / 1000) * newChild;
+        int newChild = ((y / 5.0) * (populations[index].popu / 2)) * child;
+        if (DEBUG) printf("New child: %d\n", newChild);
+        newChild -= (iF / 1000.0) * newChild;
         updatePopulations(newChild);
         updatedPopu += newChild;
-        deathPopu += ((updatedPopu * DEATH_RATE[i++]) / 1000);
+        deathPopu = ((updatedPopu * DEATH_RATE[i++]) / 1000);
         updatedPopu -= deathPopu;
     }
 
@@ -152,7 +153,7 @@ void updatePopulations(int child)
 
     populations[index].popu = child;
 
-    if (0) {
+    if (DEBUG) {
         for(int i = 0; i < AGE_GROUP; i++) {
             printf("(%d to %d) ---  %d\n", i * 5, (i + 1) * 5 - 1, populations[i].popu);
         }
